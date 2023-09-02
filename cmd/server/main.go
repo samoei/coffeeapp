@@ -8,6 +8,8 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/samoei/coffeeapp/db"
+	"github.com/samoei/coffeeapp/router"
+	"github.com/samoei/coffeeapp/services"
 )
 
 type Config struct {
@@ -15,6 +17,7 @@ type Config struct {
 }
 type Application struct {
 	Config Config
+	Models services.Models
 }
 
 func (app Application) serve() error {
@@ -26,8 +29,8 @@ func (app Application) serve() error {
 	fmt.Println("API server is listening on port:", port)
 
 	srv := &http.Server{
-		Addr: fmt.Sprintf(":%s", port),
-		//TODO: add router
+		Addr:    fmt.Sprintf(":%s", port),
+		Handler: router.Routes(),
 	}
 
 	return srv.ListenAndServe()
@@ -55,7 +58,7 @@ func main() {
 
 	app := &Application{
 		Config: cfg,
-		//TODO: add models later
+		Models: services.New(dbConn.DB),
 	}
 
 	err = app.serve()
