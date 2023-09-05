@@ -52,6 +52,69 @@ func (c *Coffee) GetAllCoffees() ([]*Coffee, error) {
 	return coffees, nil
 }
 
+func (c *Coffee) GetCoffeeById(id string) (*Coffee, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	query := `SELECT id, name, roast, image, region, price, grind_unit, created_at, updated_at FROM coffee WHERE id=$1`
+
+	row := db.QueryRowContext(ctx, query, id)
+
+	var coffee *Coffee
+	err := row.Scan(
+		&coffee.ID,
+		&coffee.Name,
+		&coffee.Roast,
+		&coffee.Image,
+		&coffee.Region,
+		&coffee.Price,
+		&coffee.GrindUnit,
+		&coffee.CreatedAt,
+		&coffee.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return coffee, nil
+}
+
+func (c *Coffee) UpdateCoffe(id string, body Coffee) (*Coffee, error) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	query := `
+			UPDATE coffee 
+			SET 
+			  	name = $1, 
+				roast = $2, 
+				image = $3, 
+				region = $4, 
+				price = $5, 
+				grind_unit = $6, 
+				updated_at = $7 
+			WHERE id=$8`
+
+	_, err := db.ExecContext(
+		ctx,
+		query,
+		body.Name,
+		body.Roast,
+		body.Image,
+		body.Region,
+		body.Price,
+		body.GrindUnit,
+		time.Now(),
+		id,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &body, nil
+}
+
 func (c *Coffee) CreateCoffee(coffee Coffee) (*Coffee, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
@@ -76,4 +139,19 @@ func (c *Coffee) CreateCoffee(coffee Coffee) (*Coffee, error) {
 		return nil, err
 	}
 	return &coffee, nil
+}
+func (c *Coffee) DeleteCoffe(id string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	query := "DELETE FROM coffee WHERE id = $1"
+
+	_, err := db.ExecContext(ctx, query, id)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }
